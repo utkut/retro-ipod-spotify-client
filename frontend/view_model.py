@@ -1,5 +1,5 @@
 import spotify_manager
-from functools import lru_cache 
+from functools import lru_cache
 
 MENU_PAGE_SIZE = 6
 
@@ -70,7 +70,7 @@ class NowPlayingCommand():
     def __init__(self, runnable = lambda:()):
         self.has_run = False
         self.runnable = runnable
-    
+
     def run(self):
         self.has_run = True
         self.runnable()
@@ -123,7 +123,7 @@ class SearchPage():
         if len(self.live_render.query) > 15:
             return
         active_char = ' ' if self.live_render.active_char == 26 \
-          else chr(self.live_render.active_char + ord('a')) 
+          else chr(self.live_render.active_char + ord('a'))
         self.live_render.query += active_char
         self.live_render.refresh()
 
@@ -181,13 +181,13 @@ class NowPlayingPage():
         self.live_render.refresh()
 
     def nav_prev(self):
-        spotify_manager.run_async(lambda: self.play_previous()) 
+        spotify_manager.run_async(lambda: self.play_previous())
 
     def nav_next(self):
-        spotify_manager.run_async(lambda: self.play_next()) 
+        spotify_manager.run_async(lambda: self.play_next())
 
     def nav_play(self):
-        spotify_manager.run_async(lambda: self.toggle_play()) 
+        spotify_manager.run_async(lambda: self.toggle_play())
 
     def nav_up(self):
         pass
@@ -223,14 +223,84 @@ class MenuPage():
         return None
 
     def nav_prev(self):
-        spotify_manager.run_async(lambda: spotify_manager.play_previous()) 
+        spotify_manager.run_async(lambda: spotify_manager.play_previous())
 
     def nav_next(self):
-        spotify_manager.run_async(lambda: spotify_manager.play_next()) 
+        spotify_manager.run_async(lambda: spotify_manager.play_next())
 
     def nav_play(self):
-        spotify_manager.run_async(lambda: spotify_manager.toggle_play()) 
-    
+        spotify_manager.run_async(lambda: spotify_manager.toggle_play())
+
+    def get_index_jump_up(self):
+        return 1
+
+    def get_index_jump_down(self):
+        return 1
+
+    def nav_up(self):
+        jump = self.get_index_jump_up()
+        if(self.index >= self.total_size() - jump):
+            return
+        if (self.index >= self.page_start + MENU_PAGE_SIZE - jump):
+            self.page_start = self.page_start + jump
+        self.index = self.index + jump
+
+    def nav_down(self):
+        jump = self.get_index_jump_down()
+        if(self.index <= (jump - 1)):
+            return
+        if (self.index <= self.page_start + (jump - 1)):
+            self.page_start = self.page_start - jump
+            if (self.page_start == 1):
+                self.page_start = 0
+        self.index = self.index - jump
+
+    def nav_select(self):
+        return self.page_at(self.index)
+
+    def nav_back(self):
+        return self.previous_page
+
+    def render(self):
+        lines = []
+        total_size = self.total_size()
+        for i in range(self.page_start, self.page_start + MENU_PAGE_SIZE):
+            if (i < total_size):
+                page = self.page_at(i)
+                if (page is None) :
+                    lines.append(EMPTY_LINE_ITEM)
+                else:
+                    line_type = LINE_TITLE if page.is_title else \
+                        LINE_HIGHLIGHT if i == self.index else LINE_NORMAL
+                    lines.append(LineItem(page.header, line_type, page.has_sub_page))
+            else:
+                lines.append(EMPTY_LINE_ITEM)
+        return MenuRendering(lines=lines, header=self.header, page_start=self.index, total_count=total_size)
+
+class SettingsPage():
+    def __init__(self, header, previous_page, has_sub_page=False, is_title = False):
+        self.index = 0
+        self.page_start = 0
+        self.header = header
+        self.has_sub_page = has_sub_page
+        self.previous_page = previous_page
+        self.is_title = is_title
+
+    def total_size(self):
+        return 0
+
+    def page_at(self, index):
+        return None
+
+    def nav_prev(self):
+        spotify_manager.run_async(lambda: spotify_manager.play_previous())
+
+    def nav_next(self):
+        spotify_manager.run_async(lambda: spotify_manager.play_next())
+
+    def nav_play(self):
+        spotify_manager.run_async(lambda: spotify_manager.toggle_play())
+
     def get_index_jump_up(self):
         return 1
 
@@ -311,7 +381,7 @@ class SearchResultsPage(MenuPage):
         super().__init__("Search Results", previous_page, has_sub_page=True)
         self.results = results
         tracks, albums, artists = len(results.tracks), len(results.albums), len(results.artists)
-        # Add 1 to each count (if > 0) to make room for section header line items 
+        # Add 1 to each count (if > 0) to make room for section header line items
         self.tracks = tracks + 1 if tracks > 0 else 0
         self.artists = artists + 1 if artists > 0 else 0
         self.albums = albums + 1 if albums > 0 else 0
@@ -375,7 +445,7 @@ class ArtistsPage(MenuPage):
         artist = spotify_manager.DATASTORE.getArtist(index)
         command = NowPlayingCommand(lambda: spotify_manager.play_artist(artist.uri))
         return NowPlayingPage(self, artist.name, command)
-    
+
 class SingleArtistPage(MenuPage):
     def __init__(self, artistName, previous_page):
         super().__init__(artistName, previous_page, has_sub_page=True)
@@ -442,21 +512,19 @@ class RootPage(MenuPage):
             NewReleasesPage(self),
             PlaylistsPage(self),
             SearchPage(self),
+            SettingsPage(self),
             NowPlayingPage(self, "Now Playing", NowPlayingCommand())
         ]
         self.index = 0
         self.page_start = 0
-    
+
     def get_pages(self):
         if (not spotify_manager.DATASTORE.now_playing):
             return self.pages[0:-1]
         return self.pages
-    
+
     def total_size(self):
         return len(self.get_pages())
 
     def page_at(self, index):
         return self.get_pages()[index]
-
-
-    
