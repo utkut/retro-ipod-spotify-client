@@ -314,7 +314,7 @@ class StartPage(tk.Frame):
         self.wifi_indicator = tk.Label(header_container, image=self.space_image, background=SPOT_BLACK)
         self.wifi_indicator.grid(sticky='w', column=2, row=1, padx=(0,90 * SCALE))
         self.bt_indicator = tk.Label(header_container, image=self.space_image, background=SPOT_BLACK)
-        self.bt_indicator.grid(sticky='w', column=2, row=2, padx=(0,90 * SCALE))
+        self.bt_indicator.grid(sticky='w', column=2, row=0, padx=(0,90 * SCALE))
         header_container.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         divider = tk.Canvas(self)
