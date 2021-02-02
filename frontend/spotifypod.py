@@ -361,7 +361,7 @@ class StartPage(tk.Frame):
     def hide_scroll(self):
         self.scrollFrame.grid_forget()
 
-    def set_header(self, header, now_playing = None, has_wifi = False, has_bt= False):
+    def set_header(self, header, now_playing = None, has_wifi = False, has_bt= True):
         truncd_header = header if len(header) < 20 else header[0:17] + "..."
         self.header_label.configure(text=truncd_header)
         play_image = self.space_image
