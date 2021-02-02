@@ -68,7 +68,7 @@ DATASTORE = datastore.Datastore()
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 pageSize = 50
 has_internet = False
-refr
+
 def check_internet(request):
     global has_internet
     try:
@@ -129,7 +129,7 @@ def refresh_devices():
     results = sp.devices()
     DATASTORE.clearDevices()
     for _, item in enumerate(results['devices']):
-        if "SpotifyPod" in item['name']:
+        if "SpotifyPod" in item['name']: # Device Name
             print(item['name'])
             device = UserDevice(item['id'], item['name'], item['is_active'])
             DATASTORE.setUserDevice(device)
